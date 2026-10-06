@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "154615707401",
+    "project_id": "ahl-bader-institute",
+    "storage_bucket": "ahl-bader-institute.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154615707401:android:ea7ff49c5ddb715f02c5d8",
+        "android_client_info": {
+          "package_name": "com.example.ahl_bader_institute"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6YNBu2b4MiL3G-9mpWfFsaW7Vsn_b3Is"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
