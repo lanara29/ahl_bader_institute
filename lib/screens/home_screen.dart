@@ -8,6 +8,7 @@ import 'teachers_screen.dart';
 import 'add_student_screen.dart';
 import 'students_screen.dart';
 import 'search_student_screen.dart';
+import 'circles_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -603,7 +604,115 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+
+        const SizedBox(height: 12),
+
+        // الحلقات القرآنية (Prominent Banner Card)
+        _buildCirclesBannerCard(),
       ],
+    );
+  }
+
+  Widget _buildCirclesBannerCard() {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CirclesScreen()),
+        ).then((_) => _loadStatistics());
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF016574),
+              Color(0xFF00796B),
+            ],
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF016574).withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE8C882).withValues(alpha: 0.5),
+                  width: 1.2,
+                ),
+              ),
+              child: const Icon(
+                Icons.menu_book_rounded,
+                color: Color(0xFFE8C882),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'الحلقات القرآنية',
+                        style: GoogleFonts.cairo(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8C882),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'جديد',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryTealDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    'استعراض الحلقات وتوزيع الطلاب حسب الآنسات',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFFE8C882),
+              size: 16,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -738,9 +847,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             _bottomNavItem(
               index: 1,
+              icon: Icons.menu_book_rounded,
+              label: 'الحلقات',
+              isActive: _currentBottomIndex == 1,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CirclesScreen()),
+                ).then((_) => _loadStatistics());
+              },
+            ),
+            _bottomNavItem(
+              index: 2,
               icon: Icons.groups_rounded,
               label: 'الطلاب',
-              isActive: _currentBottomIndex == 1,
+              isActive: _currentBottomIndex == 2,
               onTap: () {
                 Navigator.push(
                   context,
@@ -749,10 +870,10 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             _bottomNavItem(
-              index: 2,
+              index: 3,
               icon: Icons.school_rounded,
               label: 'الآنسات',
-              isActive: _currentBottomIndex == 2,
+              isActive: _currentBottomIndex == 3,
               onTap: () {
                 Navigator.push(
                   context,

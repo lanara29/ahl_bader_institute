@@ -6,6 +6,7 @@ import '../db/database_helper.dart';
 import 'home_screen.dart';
 import 'students_screen.dart';
 import 'add_teacher_screen.dart';
+import 'circles_screen.dart';
 
 class TeachersScreen extends StatefulWidget {
   const TeachersScreen({super.key});
@@ -509,10 +510,31 @@ class _TeachersScreenState extends State<TeachersScreen> {
                   ),
                 ),
 
-                // Left Action Buttons: Edit (Teal) & Delete (Red)
+                // Left Action Buttons: View Circle (Gold), Edit (Teal) & Delete (Red)
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CirclesScreen(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3D6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.menu_book_rounded, size: 16, color: Color(0xFFC89336)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () {
                         Navigator.push(
@@ -625,6 +647,18 @@ class _TeachersScreenState extends State<TeachersScreen> {
             ),
             _bottomNavItem(
               index: 1,
+              icon: Icons.menu_book_rounded,
+              label: 'الحلقات',
+              isActive: false,
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CirclesScreen()),
+                );
+              },
+            ),
+            _bottomNavItem(
+              index: 2,
               icon: Icons.groups_rounded,
               label: 'الطلاب',
               isActive: false,
@@ -636,7 +670,7 @@ class _TeachersScreenState extends State<TeachersScreen> {
               },
             ),
             _bottomNavItem(
-              index: 2,
+              index: 3,
               icon: Icons.school_rounded,
               label: 'الآنسات',
               isActive: true,

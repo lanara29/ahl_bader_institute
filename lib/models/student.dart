@@ -16,6 +16,13 @@ class Student {
   final String joinDate;
   final String notes;
 
+  // Payment Fields
+  final double requiredFee;
+  final double paidAmount;
+  final String paymentStatus; // 'paid', 'partial', 'unpaid', 'exempt'
+  final String paymentDate;
+  final String paymentNotes;
+
   Student({
     this.id,
     required this.name,
@@ -33,7 +40,28 @@ class Student {
     required this.grade,
     this.joinDate = '01-09-2023',
     this.notes = '',
+    this.requiredFee = 0.0,
+    this.paidAmount = 0.0,
+    this.paymentStatus = 'unpaid',
+    this.paymentDate = '',
+    this.paymentNotes = '',
   });
+
+  double get remainingFee => (requiredFee - paidAmount) > 0 ? (requiredFee - paidAmount) : 0.0;
+
+  String get paymentStatusArabic {
+    switch (paymentStatus) {
+      case 'paid':
+        return 'مسدد بالكامل';
+      case 'partial':
+        return 'مسدد جزئياً';
+      case 'exempt':
+        return 'معفى / منحة';
+      case 'unpaid':
+      default:
+        return requiredFee > 0 ? 'غير مسدد' : 'لم يحدد';
+    }
+  }
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
@@ -52,6 +80,11 @@ class Student {
       'grade': grade,
       'join_date': joinDate,
       'notes': notes,
+      'required_fee': requiredFee,
+      'paid_amount': paidAmount,
+      'payment_status': paymentStatus,
+      'payment_date': paymentDate,
+      'payment_notes': paymentNotes,
     };
     if (id != null) {
       map['id'] = id;
@@ -77,6 +110,11 @@ class Student {
       grade: map['grade'] as String? ?? '',
       joinDate: map['join_date'] as String? ?? '01-09-2023',
       notes: map['notes'] as String? ?? '',
+      requiredFee: (map['required_fee'] as num?)?.toDouble() ?? 0.0,
+      paidAmount: (map['paid_amount'] as num?)?.toDouble() ?? 0.0,
+      paymentStatus: map['payment_status'] as String? ?? 'unpaid',
+      paymentDate: map['payment_date'] as String? ?? '',
+      paymentNotes: map['payment_notes'] as String? ?? '',
     );
   }
 
@@ -97,6 +135,11 @@ class Student {
     String? grade,
     String? joinDate,
     String? notes,
+    double? requiredFee,
+    double? paidAmount,
+    String? paymentStatus,
+    String? paymentDate,
+    String? paymentNotes,
   }) {
     return Student(
       id: id ?? this.id,
@@ -115,6 +158,11 @@ class Student {
       grade: grade ?? this.grade,
       joinDate: joinDate ?? this.joinDate,
       notes: notes ?? this.notes,
+      requiredFee: requiredFee ?? this.requiredFee,
+      paidAmount: paidAmount ?? this.paidAmount,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      paymentDate: paymentDate ?? this.paymentDate,
+      paymentNotes: paymentNotes ?? this.paymentNotes,
     );
   }
 }

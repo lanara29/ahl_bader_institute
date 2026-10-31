@@ -7,6 +7,7 @@ import '../db/database_helper.dart';
 import 'add_student_screen.dart';
 import 'teachers_screen.dart';
 import 'home_screen.dart';
+import 'circles_screen.dart';
 
 class StudentsScreen extends StatefulWidget {
   const StudentsScreen({super.key});
@@ -471,6 +472,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                 ),
                               ),
                             ),
+                          // Payment Status Badge
+                          if (student.requiredFee > 0 || student.paidAmount > 0 || student.paymentStatus == 'exempt')
+                            _buildPaymentBadge(student),
                         ],
                       ),
                     ],
@@ -554,6 +558,62 @@ class _StudentsScreenState extends State<StudentsScreen> {
     );
   }
 
+  Widget _buildPaymentBadge(Student student) {
+    Color bgColor;
+    Color textColor;
+    String text;
+
+    final req = student.requiredFee % 1 == 0 ? student.requiredFee.toInt() : student.requiredFee;
+    final paid = student.paidAmount % 1 == 0 ? student.paidAmount.toInt() : student.paidAmount;
+
+    switch (student.paymentStatus) {
+      case 'paid':
+        bgColor = const Color(0xFFD7F5F0);
+        textColor = const Color(0xFF00796B);
+        text = 'مسدد ($paid)';
+        break;
+      case 'partial':
+        bgColor = const Color(0xFFFFF3E0);
+        textColor = Colors.orange.shade800;
+        text = 'جزئي ($paid / $req)';
+        break;
+      case 'exempt':
+        bgColor = const Color(0xFFF3E8FF);
+        textColor = const Color(0xFF8B5CF6);
+        text = 'معفى';
+        break;
+      case 'unpaid':
+      default:
+        bgColor = const Color(0xFFFFEBEE);
+        textColor = Colors.red.shade700;
+        text = student.requiredFee > 0 ? 'غير مسدد ($req)' : 'غير مسدد';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.payments_outlined, size: 11, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.cairo(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -587,13 +647,25 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ),
             _bottomNavItem(
               index: 1,
+              icon: Icons.menu_book_rounded,
+              label: 'الحلقات',
+              isActive: false,
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CirclesScreen()),
+                );
+              },
+            ),
+            _bottomNavItem(
+              index: 2,
               icon: Icons.groups_rounded,
               label: 'الطلاب',
               isActive: true,
               onTap: () {},
             ),
             _bottomNavItem(
-              index: 2,
+              index: 3,
               icon: Icons.school_rounded,
               label: 'الآنسات',
               isActive: false,

@@ -35,6 +35,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   final TextEditingController _gradeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
+  // Payment Controllers & State
+  final TextEditingController _requiredFeeController = TextEditingController();
+  final TextEditingController _paidAmountController = TextEditingController();
+  final TextEditingController _paymentNotesController = TextEditingController();
+  String _selectedPaymentStatus = 'unpaid';
+
   // Dropdown States
   String? _selectedSocialStatus;
   Teacher? _selectedTeacher;
@@ -68,6 +74,19 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       _parentMobileController.text = s.parentMobile;
       _gradeController.text = s.grade;
       _notesController.text = s.notes;
+      if (s.requiredFee > 0) {
+        _requiredFeeController.text = s.requiredFee % 1 == 0
+            ? s.requiredFee.toInt().toString()
+            : s.requiredFee.toString();
+      }
+      if (s.paidAmount > 0) {
+        _paidAmountController.text = s.paidAmount % 1 == 0
+            ? s.paidAmount.toInt().toString()
+            : s.paidAmount.toString();
+      }
+      _paymentNotesController.text = s.paymentNotes;
+      _selectedPaymentStatus = s.paymentStatus.isNotEmpty ? s.paymentStatus : 'unpaid';
+
       if (_socialStatusOptions.contains(s.socialStatus)) {
         _selectedSocialStatus = s.socialStatus;
       } else if (s.socialStatus.isNotEmpty) {
@@ -91,7 +110,27 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     _parentMobileController.dispose();
     _gradeController.dispose();
     _notesController.dispose();
+    _requiredFeeController.dispose();
+    _paidAmountController.dispose();
+    _paymentNotesController.dispose();
     super.dispose();
+  }
+
+  void _autoDetectPaymentStatus() {
+    final req = double.tryParse(_requiredFeeController.text.trim()) ?? 0.0;
+    final paid = double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+
+    if (_selectedPaymentStatus == 'exempt') return;
+
+    setState(() {
+      if (req > 0 && paid >= req) {
+        _selectedPaymentStatus = 'paid';
+      } else if (paid > 0 && paid < req) {
+        _selectedPaymentStatus = 'partial';
+      } else {
+        _selectedPaymentStatus = 'unpaid';
+      }
+    });
   }
 
   // Fetch teachers dynamically from Firebase Firestore
@@ -142,6 +181,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         joinDate: widget.student?.joinDate ??
             '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
         notes: _notesController.text.trim(),
+        requiredFee: double.tryParse(_requiredFeeController.text.trim()) ?? 0.0,
+        paidAmount: double.tryParse(_paidAmountController.text.trim()) ?? 0.0,
+        paymentStatus: _selectedPaymentStatus,
+        paymentDate: widget.student?.paymentDate.isNotEmpty == true
+            ? widget.student!.paymentDate
+            : '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+        paymentNotes: _paymentNotesController.text.trim(),
       );
 
       if (isEditing) {
@@ -213,7 +259,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
                         const SizedBox(height: 14),
 
-                        // Card 4: ملاحظات
+                        // Card 4: البيانات المالية والرسوم
+                        _buildPaymentDataCard(),
+
+                        const SizedBox(height: 14),
+
+                        // Card 5: ملاحظات
                         _buildNotesCard(),
 
                         const SizedBox(height: 18),
@@ -570,12 +621,139 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     );
   }
 
+  // Card 4: البيانات المالية والرسوم
+  Widget _buildPaymentDataCard() {
+    final req = double.tryParse(_requiredFeeController.text.trim()) ?? 0.0;
+    final paid = double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+    final remaining = (req - paid) > 0 ? (req - paid) : 0.0;
+
+    return _formCard(
+      title: 'البيانات المالية والرسوم',
+      icon: Icons.payments_rounded,
+      iconColor: const Color(0xFF00796B),
+      children: [
+        // Required Fee & Paid Amount
+        Row(
+          children: [
+            Expanded(
+              child: _buildFormField(
+                controller: _requiredFeeController,
+                label: 'المبلغ المطلوب (الرسم)',
+                hint: '0',
+                isNumber: true,
+                onChanged: (_) => _autoDetectPaymentStatus(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildFormField(
+                controller: _paidAmountController,
+                label: 'المبلغ المدفوع',
+                hint: '0',
+                isNumber: true,
+                onChanged: (_) => _autoDetectPaymentStatus(),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Status & Remaining Row
+        Row(
+          children: [
+            // Status Dropdown
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('حالة الدفع'),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 46,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedPaymentStatus,
+                        isExpanded: true,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+                        items: const [
+                          DropdownMenuItem(value: 'unpaid', child: Text('غير مسدد')),
+                          DropdownMenuItem(value: 'partial', child: Text('مسدد جزئياً')),
+                          DropdownMenuItem(value: 'paid', child: Text('مسدد بالكامل')),
+                          DropdownMenuItem(value: 'exempt', child: Text('معفى / منحة')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedPaymentStatus = val);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // Remaining Amount Pill
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('المبلغ المتبقي'),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 46,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: remaining > 0 ? const Color(0xFFFFF3E0) : const Color(0xFFD7F5F0),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: remaining > 0 ? Colors.orange.shade300 : const Color(0xFF00796B).withValues(alpha: 0.3),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      remaining > 0
+                          ? '${remaining % 1 == 0 ? remaining.toInt() : remaining} متبقي'
+                          : 'لا يوجد متبقي',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: remaining > 0 ? Colors.orange.shade900 : const Color(0xFF00796B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Payment Notes / Receipt Number
+        _buildFormField(
+          controller: _paymentNotesController,
+          label: 'ملاحظات الدفع / رقم الوصل',
+          hint: 'مثال: رقم الإيصال، نقداً، دفعة أولى...',
+        ),
+      ],
+    );
+  }
+
   Widget _buildFormField({
     required TextEditingController controller,
     required String label,
     required String hint,
     bool isRequired = false,
     bool isPhone = false,
+    bool isNumber = false,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,7 +762,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
-          keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+          keyboardType: isPhone
+              ? TextInputType.phone
+              : (isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text),
+          onChanged: onChanged,
           style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark),
           decoration: InputDecoration(
             hintText: hint,

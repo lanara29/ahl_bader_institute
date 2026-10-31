@@ -118,4 +118,17 @@ class DatabaseHelper {
     final students = await getStudentsByTeacher(teacherId);
     return students.length;
   }
+
+  Future<void> updateStudentTeacher({
+    required dynamic studentId,
+    required dynamic teacherId,
+    required String teacherName,
+  }) async {
+    if (studentId == null) return;
+    await _studentsCol.doc(studentId.toString()).update({
+      'teacher_id': teacherId,
+      'teacher_name': teacherName,
+      'updated_at': FieldValue.serverTimestamp(),
+    });
+  }
 }
