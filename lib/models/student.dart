@@ -23,6 +23,10 @@ class Student {
   final String paymentDate;
   final String paymentNotes;
 
+  // Course Fields
+  final dynamic courseId;
+  final String courseName;
+
   Student({
     this.id,
     required this.name,
@@ -45,9 +49,12 @@ class Student {
     this.paymentStatus = 'unpaid',
     this.paymentDate = '',
     this.paymentNotes = '',
+    this.courseId,
+    this.courseName = '',
   });
 
-  double get remainingFee => (requiredFee - paidAmount) > 0 ? (requiredFee - paidAmount) : 0.0;
+  double get remainingFee =>
+      (requiredFee - paidAmount) > 0 ? (requiredFee - paidAmount) : 0.0;
 
   String get paymentStatusArabic {
     switch (paymentStatus) {
@@ -85,6 +92,8 @@ class Student {
       'payment_status': paymentStatus,
       'payment_date': paymentDate,
       'payment_notes': paymentNotes,
+      'course_id': courseId,
+      'course_name': courseName,
     };
     if (id != null) {
       map['id'] = id;
@@ -115,6 +124,8 @@ class Student {
       paymentStatus: map['payment_status'] as String? ?? 'unpaid',
       paymentDate: map['payment_date'] as String? ?? '',
       paymentNotes: map['payment_notes'] as String? ?? '',
+      courseId: map['course_id'],
+      courseName: map['course_name'] as String? ?? '',
     );
   }
 
@@ -140,6 +151,8 @@ class Student {
     String? paymentStatus,
     String? paymentDate,
     String? paymentNotes,
+    dynamic courseId,
+    String? courseName,
   }) {
     return Student(
       id: id ?? this.id,
@@ -163,6 +176,8 @@ class Student {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       paymentDate: paymentDate ?? this.paymentDate,
       paymentNotes: paymentNotes ?? this.paymentNotes,
+      courseId: courseId ?? this.courseId,
+      courseName: courseName ?? this.courseName,
     );
   }
 }

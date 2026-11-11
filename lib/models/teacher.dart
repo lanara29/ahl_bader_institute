@@ -58,4 +58,15 @@ class Teacher {
       notes: notes ?? this.notes,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Teacher &&
+          runtimeType == other.runtimeType &&
+          ((id != null && other.id != null && id.toString() == other.id.toString()) ||
+              (id == null && other.id == null && name == other.name));
+
+  @override
+  int get hashCode => id?.toString().hashCode ?? name.hashCode;
 }

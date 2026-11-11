@@ -13,6 +13,7 @@ class AppColors {
 
   // Backgrounds
   static const Color creamBackground = Color(0xFFF9F6EE);
+  static const Color backgroundCream = creamBackground;
   static const Color cardWhite = Color(0xFFFFFFFF);
 
   // Input Fields

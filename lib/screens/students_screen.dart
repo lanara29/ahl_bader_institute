@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../models/student.dart';
 import '../models/teacher.dart';
+import '../models/course.dart';
 import '../db/database_helper.dart';
 import 'add_student_screen.dart';
 import 'teachers_screen.dart';
@@ -22,6 +23,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
   List<Student> _filteredStudents = [];
   List<Teacher> _teachers = [];
   String? _selectedTeacherName;
+  List<Course> _courses = [];
+  String? _selectedCourseId;
 
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
@@ -44,11 +47,19 @@ class _StudentsScreenState extends State<StudentsScreen> {
     setState(() => _isLoading = true);
     final studentsList = await _dbHelper.getAllStudents();
     final teachersList = await _dbHelper.getTeachers();
+    final coursesList = await _dbHelper.getCourses();
+    final activeCourse = await _dbHelper.getActiveCourse();
 
     if (mounted) {
       setState(() {
         _allStudents = studentsList;
         _teachers = teachersList;
+        _courses = coursesList;
+        if (_selectedCourseId == null && activeCourse != null) {
+          _selectedCourseId = activeCourse.id.toString();
+        } else if (_selectedCourseId == null) {
+          _selectedCourseId = 'all';
+        }
         _isLoading = false;
         _filterStudents();
       });
@@ -71,7 +82,11 @@ class _StudentsScreenState extends State<StudentsScreen> {
             _selectedTeacherName == 'كل الأنسات' ||
             s.teacherName == _selectedTeacherName;
 
-        return matchesQuery && matchesTeacher;
+        final matchesCourse = _selectedCourseId == null ||
+            _selectedCourseId == 'all' ||
+            s.courseId.toString() == _selectedCourseId;
+
+        return matchesQuery && matchesTeacher && matchesCourse;
       }).toList();
     });
   }
@@ -160,43 +175,91 @@ class _StudentsScreenState extends State<StudentsScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 10),
-
-                    // Filter Dropdown: كل الأنسات
-                    Container(
-                      height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedTeacherName ?? 'كل الأنسات',
-                          isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
-                          style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedTeacherName = val;
-                              _filterStudents();
-                            });
-                          },
-                          items: [
-                            const DropdownMenuItem(
-                              value: 'كل الأنسات',
-                              child: Text('كل الأنسات'),
+                    // Filter Row: الدورة + الآنسات
+                    Row(
+                      children: [
+                        // Filter Dropdown 1: الدورة
+                        Expanded(
+                          child: Container(
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300, width: 1),
                             ),
-                            ..._teachers.map((t) {
-                              return DropdownMenuItem(
-                                value: t.name,
-                                child: Text(t.name),
-                              );
-                            }),
-                          ],
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedCourseId ?? 'all',
+                                isExpanded: true,
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal, size: 18),
+                                style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textDark),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedCourseId = val;
+                                    _filterStudents();
+                                  });
+                                },
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: 'all',
+                                    child: Text('جميع الدورات', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  ..._courses.map((c) {
+                                    return DropdownMenuItem(
+                                      value: c.id.toString(),
+                                      child: Text(
+                                        '${c.isSummer ? '☀️' : '❄️'} ${c.name}',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+
+                        // Filter Dropdown 2: كل الأنسات
+                        Expanded(
+                          child: Container(
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300, width: 1),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedTeacherName ?? 'كل الأنسات',
+                                isExpanded: true,
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal, size: 18),
+                                style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textDark),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedTeacherName = val;
+                                    _filterStudents();
+                                  });
+                                },
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: 'كل الأنسات',
+                                    child: Text('كل الأنسات', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  ..._teachers.map((t) {
+                                    return DropdownMenuItem(
+                                      value: t.name,
+                                      child: Text(t.name, overflow: TextOverflow.ellipsis),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 12),
@@ -469,6 +532,23 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: const Color(0xFFC89336),
+                                ),
+                              ),
+                            ),
+                          // Course Badge
+                          if (student.courseName.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3E8FF),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                student.courseName,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF8B5CF6),
                                 ),
                               ),
                             ),

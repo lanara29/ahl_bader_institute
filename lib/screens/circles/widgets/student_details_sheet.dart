@@ -86,6 +86,8 @@ class StudentDetailsSheet {
               _detailRow(ctx, Icons.phone_rounded, 'هاتف ولي الأمر', student.parentMobile, isPhone: true),
               _detailRow(ctx, Icons.location_on_outlined, 'العنوان', student.address),
               _detailRow(ctx, Icons.favorite_outline, 'الحالة الاجتماعية', student.socialStatus),
+              if (student.courseName.isNotEmpty)
+                _detailRow(ctx, Icons.school_outlined, 'الدورة', student.courseName),
               if (student.notes.isNotEmpty)
                 _detailRow(ctx, Icons.notes_rounded, 'ملاحظات', student.notes),
               // Payment Details

@@ -9,6 +9,9 @@ import 'add_student_screen.dart';
 import 'students_screen.dart';
 import 'search_student_screen.dart';
 import 'circles_screen.dart';
+import '../models/course.dart';
+import 'courses/courses_screen.dart';
+import 'attendance/teacher_attendance_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentBottomIndex = 0;
   int _totalStudents = 0;
   int _totalTeachers = 0;
+  Course? _activeCourse;
   bool _isLoadingStats = true;
 
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -36,10 +40,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final teachers = await _dbHelper.getTeachers();
       final students = await _dbHelper.getAllStudents();
+      final activeCourse = await _dbHelper.getActiveCourse();
       if (mounted) {
         setState(() {
           _totalTeachers = teachers.length;
           _totalStudents = students.length;
+          _activeCourse = activeCourse;
           _isLoadingStats = false;
         });
       }
@@ -246,6 +252,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+
+          const SizedBox(height: 14),
+
+          // Active Course Header Pill
+          _buildActiveCourseHeaderPill(),
 
           const SizedBox(height: 18),
 
@@ -609,6 +620,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // الحلقات القرآنية (Prominent Banner Card)
         _buildCirclesBannerCard(),
+
+        const SizedBox(height: 12),
+
+        // نظام الدورات (Courses Banner Card)
+        _buildCoursesBannerCard(),
+
+        const SizedBox(height: 12),
+
+        // تفقد وحضور الآنسات (Attendance Banner Card)
+        _buildAttendanceBannerCard(),
       ],
     );
   }
@@ -709,6 +730,283 @@ class _HomeScreenState extends State<HomeScreen> {
               Icons.arrow_forward_ios_rounded,
               color: Color(0xFFE8C882),
               size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoursesBannerCard() {
+    final feeStr = _activeCourse != null
+        ? (_activeCourse!.fee % 1 == 0 ? _activeCourse!.fee.toInt().toString() : _activeCourse!.fee.toString())
+        : null;
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CoursesScreen()),
+        ).then((_) => _loadStatistics());
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF8B5CF6),
+              Color(0xFF6D28D9),
+            ],
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.4),
+                  width: 1.2,
+                ),
+              ),
+              child: const Icon(
+                Icons.calendar_month_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'نظام الدورات',
+                        style: GoogleFonts.cairo(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      if (_activeCourse != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8C882),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _activeCourse!.isSummer ? '☀️ صيفية' : '❄️ شتوية',
+                            style: GoogleFonts.cairo(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryTealDark,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  Text(
+                    _activeCourse != null
+                        ? '${_activeCourse!.name} (الرسم: $feeStr)'
+                        : 'إدارة وفصل الدورات الصيفية والشتوية والرسوم',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white70,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceBannerCard() {
+    final workingDaysText = _activeCourse != null
+        ? _activeCourse!.workingDaysArabic
+        : 'بحسب أيام الدورة';
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TeacherAttendanceScreen(
+              initialCourseId: _activeCourse?.id,
+            ),
+          ),
+        ).then((_) => _loadStatistics());
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF00796B),
+              Color(0xFF004D40),
+            ],
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF00796B).withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE8C882).withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
+              ),
+              child: const Icon(
+                Icons.fact_check_rounded,
+                color: Color(0xFFE8C882),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'تفقد وحضور الآنسات',
+                        style: GoogleFonts.cairo(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8C882),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'يومي',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryTealDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    'تسجيل الحضور والغياب (الدوام: $workingDaysText)',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFFE8C882),
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveCourseHeaderPill() {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CoursesScreen()),
+        ).then((_) => _loadStatistics());
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFFE8C882).withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _activeCourse?.isSummer == true ? Icons.wb_sunny_rounded : Icons.ac_unit_rounded,
+              color: const Color(0xFFE8C882),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _activeCourse != null
+                    ? 'الدورة النشطة: ${_activeCourse!.name}'
+                    : 'اضغط هنا لتعيين الدورة النشطة للمعهد',
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFFE8C882),
+              size: 20,
             ),
           ],
         ),

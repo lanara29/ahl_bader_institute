@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../models/student.dart';
 import '../models/teacher.dart';
+import '../models/course.dart';
 import '../db/database_helper.dart';
 
 class AddStudentScreen extends StatefulWidget {
@@ -44,8 +45,15 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   // Dropdown States
   String? _selectedSocialStatus;
   Teacher? _selectedTeacher;
+  String? _selectedTeacherId;
   List<Teacher> _teachersList = [];
   bool _isLoadingTeachers = true;
+
+  // Course State
+  Course? _selectedCourse;
+  String? _selectedCourseId;
+  List<Course> _coursesList = [];
+  bool _isLoadingCourses = true;
   bool _isSaving = false;
 
   final List<String> _socialStatusOptions = [
@@ -95,6 +103,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       }
     }
     _loadTeachers();
+    _loadCourses();
   }
 
   @override
@@ -140,17 +149,71 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       setState(() {
         _teachersList = list;
         if (widget.student != null) {
-          try {
-            _selectedTeacher = list.firstWhere(
-              (t) => t.id == widget.student!.teacherId || t.name == widget.student!.teacherName,
-            );
-          } catch (_) {
-            if (list.isNotEmpty) _selectedTeacher = list.first;
+          final tMatch = list.where(
+            (t) =>
+                (t.id != null && t.id.toString() == widget.student!.teacherId.toString()) ||
+                t.name == widget.student!.teacherName,
+          );
+          if (tMatch.isNotEmpty) {
+            _selectedTeacher = tMatch.first;
+          } else if (list.isNotEmpty) {
+            _selectedTeacher = list.first;
           }
         } else if (list.isNotEmpty) {
           _selectedTeacher = list.first;
         }
+        _selectedTeacherId = _selectedTeacher?.id?.toString() ?? _selectedTeacher?.name;
         _isLoadingTeachers = false;
+      });
+    }
+  }
+
+  // Fetch courses dynamically and auto-fill fee from active course
+  Future<void> _loadCourses() async {
+    final courses = await _dbHelper.getCourses();
+    final activeCourse = await _dbHelper.getActiveCourse();
+
+    if (mounted) {
+      setState(() {
+        _coursesList = courses;
+
+        if (widget.student != null) {
+          // Editing existing student
+          final cMatch = courses.where(
+            (c) =>
+                (c.id != null && c.id.toString() == widget.student!.courseId.toString()) ||
+                c.name == widget.student!.courseName,
+          );
+          if (cMatch.isNotEmpty) {
+            _selectedCourse = cMatch.first;
+          } else {
+            _selectedCourse = courses.any((c) => c.isActive)
+                ? courses.firstWhere((c) => c.isActive)
+                : (courses.isNotEmpty ? courses.first : null);
+          }
+        } else {
+          // New student: default to active course from the list
+          Course? defaultCourse;
+          if (courses.isNotEmpty) {
+            defaultCourse = courses.firstWhere(
+              (c) => c.isActive,
+              orElse: () => activeCourse != null &&
+                      courses.any((c) => c.id.toString() == activeCourse.id.toString())
+                  ? courses.firstWhere((c) => c.id.toString() == activeCourse.id.toString())
+                  : courses.first,
+            );
+          }
+          _selectedCourse = defaultCourse;
+
+          if (_selectedCourse != null && _selectedCourse!.fee > 0 && _requiredFeeController.text.isEmpty) {
+            _requiredFeeController.text = _selectedCourse!.fee % 1 == 0
+                ? _selectedCourse!.fee.toInt().toString()
+                : _selectedCourse!.fee.toString();
+            _autoDetectPaymentStatus();
+          }
+        }
+        _selectedCourseId = _selectedCourse?.id?.toString() ?? _selectedCourse?.name;
+        _isLoadingCourses = false;
       });
     }
   }
@@ -188,6 +251,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             ? widget.student!.paymentDate
             : '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
         paymentNotes: _paymentNotesController.text.trim(),
+        courseId: _selectedCourse?.id ?? '',
+        courseName: _selectedCourse?.name ?? '',
       );
 
       if (isEditing) {
@@ -485,13 +550,102 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     );
   }
 
-  // Card 3: بيانات الحفظ
+  // Card 3: بيانات الحفظ والدورة
   Widget _buildMemorizationDataCard() {
     return _formCard(
-      title: 'بيانات الحفظ',
+      title: 'بيانات الدورة والحفظ',
       icon: Icons.menu_book,
       iconColor: const Color(0xFFC89336),
       children: [
+        // Course Selection (الدورة المسجل بها)
+        _buildLabel('الدورة المسجل بها *'),
+        const SizedBox(height: 6),
+        Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300, width: 1),
+          ),
+          child: _isLoadingCourses
+              ? const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
+              : Builder(
+                  builder: (context) {
+                    final uniqueCourses = <String, Course>{};
+                    for (final course in _coursesList) {
+                      final key = (course.id ?? course.name).toString();
+                      if (key.isNotEmpty) uniqueCourses[key] = course;
+                    }
+
+                    final validCourseId = uniqueCourses.containsKey(_selectedCourseId)
+                        ? _selectedCourseId
+                        : (uniqueCourses.isNotEmpty ? uniqueCourses.keys.first : null);
+
+                    return DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: validCourseId,
+                        hint: Text('اختر الدورة...', style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint)),
+                        isExpanded: true,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+                        items: uniqueCourses.entries.map((entry) {
+                          final course = entry.value;
+                          final feeStr = course.fee % 1 == 0 ? course.fee.toInt().toString() : course.fee.toString();
+                          return DropdownMenuItem<String>(
+                            value: entry.key,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  course.isSummer ? Icons.wb_sunny_rounded : Icons.ac_unit_rounded,
+                                  size: 16,
+                                  color: course.isSummer ? const Color(0xFFC89336) : const Color(0xFF00796B),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${course.name} (رسم: $feeStr)',
+                                    style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (course.isActive)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8F5E9),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'نشطة',
+                                      style: GoogleFonts.cairo(fontSize: 9.5, color: Colors.green.shade800, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? val) {
+                          if (val != null && uniqueCourses.containsKey(val)) {
+                            setState(() {
+                              _selectedCourseId = val;
+                              _selectedCourse = uniqueCourses[val];
+                              if (_selectedCourse != null && _selectedCourse!.fee > 0) {
+                                _requiredFeeController.text = _selectedCourse!.fee % 1 == 0
+                                    ? _selectedCourse!.fee.toInt().toString()
+                                    : _selectedCourse!.fee.toString();
+                                _autoDetectPaymentStatus();
+                              }
+                            });
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+
+        const SizedBox(height: 12),
+
         // Teacher Selection
         _buildLabel('الآنسة / المعلمة'),
         const SizedBox(height: 6),
@@ -505,22 +659,41 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           ),
           child: _isLoadingTeachers
               ? const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
-              : DropdownButtonHideUnderline(
-                  child: DropdownButton<Teacher>(
-                    value: _selectedTeacher,
-                    hint: Text('اختر...', style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint)),
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
-                    items: _teachersList.map((teacher) {
-                      return DropdownMenuItem<Teacher>(
-                        value: teacher,
-                        child: Text(teacher.name, style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark)),
-                      );
-                    }).toList(),
-                    onChanged: (Teacher? val) {
-                      setState(() => _selectedTeacher = val);
-                    },
-                  ),
+              : Builder(
+                  builder: (context) {
+                    final uniqueTeachers = <String, Teacher>{};
+                    for (final t in _teachersList) {
+                      final key = (t.id ?? t.name).toString();
+                      if (key.isNotEmpty) uniqueTeachers[key] = t;
+                    }
+
+                    final validTeacherId = uniqueTeachers.containsKey(_selectedTeacherId)
+                        ? _selectedTeacherId
+                        : (uniqueTeachers.isNotEmpty ? uniqueTeachers.keys.first : null);
+
+                    return DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: validTeacherId,
+                        hint: Text('اختر...', style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint)),
+                        isExpanded: true,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+                        items: uniqueTeachers.entries.map((entry) {
+                          return DropdownMenuItem<String>(
+                            value: entry.key,
+                            child: Text(entry.value.name, style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark)),
+                          );
+                        }).toList(),
+                        onChanged: (String? val) {
+                          if (val != null && uniqueTeachers.containsKey(val)) {
+                            setState(() {
+                              _selectedTeacherId = val;
+                              _selectedTeacher = uniqueTeachers[val];
+                            });
+                          }
+                        },
+                      ),
+                    );
+                  },
                 ),
         ),
 
