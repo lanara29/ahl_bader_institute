@@ -307,26 +307,29 @@ class AddEditCourseDialog {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'تعيين كدورة نشطة حالياً',
-                                    style: GoogleFonts.cairo(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: isActive ? const Color(0xFF00796B) : AppColors.textDark,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'تعيين كدورة نشطة حالياً',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: isActive ? const Color(0xFF00796B) : AppColors.textDark,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    'ستكون الدورة الافتراضية للتسجيل والحلقات',
-                                    style: GoogleFonts.cairo(
-                                      fontSize: 10.5,
-                                      color: AppColors.textMuted,
+                                    Text(
+                                      'ستكون الدورة الافتراضية للتسجيل والحلقات',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 10.5,
+                                        color: AppColors.textMuted,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Switch(
                                 value: isActive,
                                 activeColor: const Color(0xFF00796B),

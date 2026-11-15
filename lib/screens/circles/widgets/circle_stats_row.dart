@@ -29,7 +29,7 @@ class CircleStatsRow extends StatelessWidget {
             color: const Color(0xFF00796B),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 6),
         Expanded(
           child: _statCard(
             title: 'إجمالي الطلاب',
@@ -39,7 +39,7 @@ class CircleStatsRow extends StatelessWidget {
             color: const Color(0xFFC89336),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 6),
         Expanded(
           child: _statCard(
             title: 'متوسط الحلقة',
@@ -63,7 +63,7 @@ class CircleStatsRow extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -77,36 +77,51 @@ class CircleStatsRow extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                title,
-                style: GoogleFonts.cairo(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textMuted,
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 3),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    style: GoogleFonts.cairo(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.cairo(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: GoogleFonts.cairo(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
-          Text(
-            subtitle,
-            style: GoogleFonts.cairo(
-              fontSize: 9.5,
-              color: AppColors.textMuted,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              subtitle,
+              maxLines: 1,
+              style: GoogleFonts.cairo(
+                fontSize: 9,
+                color: AppColors.textMuted,
+              ),
             ),
           ),
         ],

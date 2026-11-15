@@ -55,11 +55,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
         _allStudents = studentsList;
         _teachers = teachersList;
         _courses = coursesList;
-        if (_selectedCourseId == null && activeCourse != null) {
-          _selectedCourseId = activeCourse.id.toString();
-        } else if (_selectedCourseId == null) {
-          _selectedCourseId = 'all';
-        }
+        _selectedCourseId ??= 'all';
         _isLoading = false;
         _filterStudents();
       });
