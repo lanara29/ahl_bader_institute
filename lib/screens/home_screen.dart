@@ -10,7 +10,7 @@ import 'students_screen.dart';
 import 'search_student_screen.dart';
 import 'circles_screen.dart';
 import '../models/course.dart';
-import 'courses/courses_screen.dart';
+import 'courses/select_course_screen.dart';
 import 'attendance/teacher_attendance_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -41,10 +41,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final teachers = await _dbHelper.getTeachers();
       final students = await _dbHelper.getAllStudents();
       final activeCourse = await _dbHelper.getActiveCourse();
+      final courseStudents = activeCourse != null
+          ? students.where((s) => s.matchesCourse(activeCourse)).length
+          : students.length;
+
       if (mounted) {
         setState(() {
           _totalTeachers = teachers.length;
-          _totalStudents = students.length;
+          _totalStudents = courseStudents;
           _activeCourse = activeCourse;
           _isLoadingStats = false;
         });
@@ -289,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Image.asset(
                     'assets/images/logo.png',
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
+                    errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.mosque_rounded,
                       color: AppColors.primaryTeal,
                       size: 44,
@@ -415,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // Total Students (Right card in RTL)
         Expanded(
           child: _statCard(
-            title: 'إجمالي الطلاب',
+            title: _activeCourse != null ? 'طلاب الدورة' : 'إجمالي الطلاب',
             count: _totalStudents.toString(),
             icon: Icons.groups_rounded,
             iconColor: AppColors.primaryTeal,
@@ -623,11 +627,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         const SizedBox(height: 12),
 
-        // نظام الدورات (Courses Banner Card)
-        _buildCoursesBannerCard(),
-
-        const SizedBox(height: 12),
-
         // تفقد وحضور الآنسات (Attendance Banner Card)
         _buildAttendanceBannerCard(),
       ],
@@ -729,118 +728,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const Icon(
               Icons.arrow_forward_ios_rounded,
               color: Color(0xFFE8C882),
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCoursesBannerCard() {
-    final feeStr = _activeCourse != null
-        ? (_activeCourse!.fee % 1 == 0 ? _activeCourse!.fee.toInt().toString() : _activeCourse!.fee.toString())
-        : null;
-
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CoursesScreen()),
-        ).then((_) => _loadStatistics());
-      },
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF8B5CF6),
-              Color(0xFF6D28D9),
-            ],
-            begin: Alignment.centerRight,
-            end: Alignment.centerLeft,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.4),
-                  width: 1.2,
-                ),
-              ),
-              child: const Icon(
-                Icons.calendar_month_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'نظام الدورات',
-                        style: GoogleFonts.cairo(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      if (_activeCourse != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8C882),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            _activeCourse!.isSummer ? '☀️ صيفية' : '❄️ شتوية',
-                            style: GoogleFonts.cairo(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryTealDark,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  Text(
-                    _activeCourse != null
-                        ? '${_activeCourse!.name} (الرسم: $feeStr)'
-                        : 'إدارة وفصل الدورات الصيفية والشتوية والرسوم',
-                    style: GoogleFonts.cairo(
-                      fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white70,
               size: 16,
             ),
           ],
@@ -967,7 +854,9 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const CoursesScreen()),
+          MaterialPageRoute(
+            builder: (_) => const SelectCourseScreen(isChangingCourse: true),
+          ),
         ).then((_) => _loadStatistics());
       },
       borderRadius: BorderRadius.circular(14),

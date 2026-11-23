@@ -375,6 +375,27 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
             ),
           ),
           actions: [
+            // Course switch popup if multiple courses exist
+            if (_courses.length > 1)
+              PopupMenuButton<Course>(
+                icon: const Icon(Icons.school_outlined, color: Colors.white),
+                tooltip: 'تغيير الدورة',
+                onSelected: (Course c) {
+                  setState(() {
+                    _selectedCourse = c;
+                    if (!c.isWorkingDay(_selectedDate)) {
+                      _selectedDate = _findNearestWorkingDay(_selectedDate, c);
+                    }
+                  });
+                  _loadAttendanceForDate(_selectedDate);
+                },
+                itemBuilder: (ctx) => _courses
+                    .map((c) => PopupMenuItem(
+                          value: c,
+                          child: Text(c.name, style: GoogleFonts.cairo()),
+                        ))
+                    .toList(),
+              ),
             // Monthly Report Action
             IconButton(
               icon: const Icon(

@@ -9,6 +9,7 @@ import 'add_student_screen.dart';
 import 'teachers_screen.dart';
 import 'home_screen.dart';
 import 'circles_screen.dart';
+import 'widgets/student_filter_bottom_sheet.dart';
 
 class StudentsScreen extends StatefulWidget {
   const StudentsScreen({super.key});
@@ -25,6 +26,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   String? _selectedTeacherName;
   List<Course> _courses = [];
   String? _selectedCourseId;
+  StudentFilterCriteria _filterCriteria = const StudentFilterCriteria();
 
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
@@ -55,7 +57,16 @@ class _StudentsScreenState extends State<StudentsScreen> {
         _allStudents = studentsList;
         _teachers = teachersList;
         _courses = coursesList;
-        _selectedCourseId ??= 'all';
+        if (_selectedCourseId == null && activeCourse != null) {
+          _selectedCourseId = activeCourse.id.toString();
+        } else {
+          _selectedCourseId ??= 'all';
+        }
+        _selectedTeacherName ??= 'كل الأنسات';
+        _filterCriteria = _filterCriteria.copyWith(
+          courseId: _selectedCourseId,
+          teacherName: _selectedTeacherName,
+        );
         _isLoading = false;
         _filterStudents();
       });
@@ -74,15 +85,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             s.parentMobile.contains(query) ||
             s.fatherName.toLowerCase().contains(query);
 
-        final matchesTeacher = _selectedTeacherName == null ||
-            _selectedTeacherName == 'كل الأنسات' ||
-            s.teacherName == _selectedTeacherName;
-
-        final matchesCourse = _selectedCourseId == null ||
-            _selectedCourseId == 'all' ||
-            s.courseId.toString() == _selectedCourseId;
-
-        return matchesQuery && matchesTeacher && matchesCourse;
+        return matchesQuery && _filterCriteria.matches(s);
       }).toList();
     });
   }
@@ -193,6 +196,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                 onChanged: (val) {
                                   setState(() {
                                     _selectedCourseId = val;
+                                    _filterCriteria = _filterCriteria.copyWith(courseId: val);
                                     _filterStudents();
                                   });
                                 },
@@ -200,6 +204,10 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                   const DropdownMenuItem(
                                     value: 'all',
                                     child: Text('جميع الدورات', overflow: TextOverflow.ellipsis),
+                                  ),
+                                  const DropdownMenuItem(
+                                    value: 'unassigned',
+                                    child: Text('⚠️ طلاب بدون دورة', overflow: TextOverflow.ellipsis),
                                   ),
                                   ..._courses.map((c) {
                                     return DropdownMenuItem(
@@ -236,6 +244,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                 onChanged: (val) {
                                   setState(() {
                                     _selectedTeacherName = val;
+                                    _filterCriteria = _filterCriteria.copyWith(teacherName: val);
                                     _filterStudents();
                                   });
                                 },
@@ -255,8 +264,17 @@ class _StudentsScreenState extends State<StudentsScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+
+                        // زر الفلترة المتقدمة
+                        _buildFilterButton(),
                       ],
                     ),
+
+                    if (!_filterCriteria.isDefault) ...[
+                      const SizedBox(height: 8),
+                      _buildActiveFiltersChips(),
+                    ],
 
                     const SizedBox(height: 12),
 
@@ -532,22 +550,48 @@ class _StudentsScreenState extends State<StudentsScreen> {
                               ),
                             ),
                           // Course Badge
-                          if (student.courseName.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3E8FF),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                student.courseName,
-                                style: GoogleFonts.cairo(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF8B5CF6),
-                                ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: student.courseName.isNotEmpty
+                                  ? const Color(0xFFF3E8FF)
+                                  : const Color(0xFFFFF3E0),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: student.courseName.isNotEmpty
+                                    ? const Color(0xFFD8B4FE)
+                                    : Colors.orange.shade300,
+                                width: 0.8,
                               ),
                             ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  student.courseName.isNotEmpty
+                                      ? Icons.school_outlined
+                                      : Icons.warning_amber_rounded,
+                                  size: 11,
+                                  color: student.courseName.isNotEmpty
+                                      ? const Color(0xFF8B5CF6)
+                                      : Colors.orange.shade800,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  student.courseName.isNotEmpty
+                                      ? student.courseName
+                                      : 'بدون دورة مسجلة',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: student.courseName.isNotEmpty
+                                        ? const Color(0xFF8B5CF6)
+                                        : Colors.orange.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           // Payment Status Badge
                           if (student.requiredFee > 0 || student.paidAmount > 0 || student.paymentStatus == 'exempt')
                             _buildPaymentBadge(student),
@@ -798,6 +842,138 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _openAdvancedFilter() {
+    final grades = _allStudents
+        .map((s) => s.grade.trim())
+        .where((g) => g.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    final social = _allStudents
+        .map((s) => s.socialStatus.trim())
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    StudentFilterBottomSheet.show(
+      context: context,
+      initialCriteria: _filterCriteria,
+      courses: _courses,
+      teachers: _teachers,
+      availableGrades: grades,
+      availableSocialStatuses: social,
+      onApply: (newCriteria) {
+        setState(() {
+          _filterCriteria = newCriteria;
+          _selectedCourseId = newCriteria.courseId;
+          _selectedTeacherName = newCriteria.teacherName;
+          _filterStudents();
+        });
+      },
+    );
+  }
+
+  Widget _buildFilterButton() {
+    final activeCount = _filterCriteria.activeFiltersCount;
+    final hasActive = activeCount > 0;
+
+    return InkWell(
+      onTap: _openAdvancedFilter,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: hasActive ? const Color(0xFFD7F5F0) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasActive ? AppColors.primaryTeal : Colors.grey.shade300,
+            width: hasActive ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.tune_rounded,
+              size: 20,
+              color: hasActive ? AppColors.primaryTeal : AppColors.textMuted,
+            ),
+            if (hasActive) ...[
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryTeal,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '$activeCount',
+                  style: GoogleFonts.cairo(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveFiltersChips() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0F2F1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.filter_alt_outlined, size: 16, color: AppColors.primaryTeal),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'الفلاتر النشطة (${_filterCriteria.activeFiltersCount}) - انقر لتعديلها',
+              style: GoogleFonts.cairo(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryTeal,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _filterCriteria = const StudentFilterCriteria();
+                _selectedCourseId = 'all';
+                _selectedTeacherName = 'كل الأنسات';
+                _filterStudents();
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                'مسح الكل',
+                style: GoogleFonts.cairo(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

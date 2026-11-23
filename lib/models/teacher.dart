@@ -36,7 +36,9 @@ class Teacher {
       name: map['name'] as String? ?? '',
       ageRange: (map['age_range'] ?? map['subject']) as String? ?? '',
       phone: map['phone'] as String? ?? '',
-      joinDate: map['join_date'] as String? ?? '01-09-2022',
+      joinDate: (map['join_date'] as String?)?.isNotEmpty == true
+          ? (map['join_date'] as String)
+          : '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
       notes: map['notes'] as String? ?? '',
     );
   }

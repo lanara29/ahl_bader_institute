@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/course.dart';
 import '../../../db/database_helper.dart';
+import '../../../utils/arabic_numbers.dart';
 
 class AddEditCourseDialog {
   static Future<void> show({
@@ -36,14 +37,6 @@ class AddEditCourseDialog {
         : (selectedSeason == 'winter'
             ? [DateTime.saturday]
             : [DateTime.saturday, DateTime.sunday, DateTime.tuesday]);
-
-    // Helper to auto-fill suggested name when season or year changes
-    void updateSuggestedName(StateSetter setState) {
-      if (!isEditing && nameController.text.isEmpty) {
-        final seasonName = selectedSeason == 'summer' ? 'الدورة الصيفية' : 'الدورة الشتوية';
-        nameController.text = '$seasonName ${yearController.text.trim()}';
-      }
-    }
 
     await showDialog(
       context: context,
@@ -332,7 +325,7 @@ class AddEditCourseDialog {
                               const SizedBox(width: 8),
                               Switch(
                                 value: isActive,
-                                activeColor: const Color(0xFF00796B),
+                                activeThumbColor: const Color(0xFF00796B),
                                 onChanged: (val) => setDialogState(() => isActive = val),
                               ),
                             ],
@@ -375,8 +368,8 @@ class AddEditCourseDialog {
                           setDialogState(() => isSaving = true);
 
                           try {
-                            final parsedFee = double.tryParse(feeController.text.trim()) ?? 0.0;
-                            final parsedYear = int.tryParse(yearController.text.trim()) ?? DateTime.now().year;
+                            final parsedFee = ArabicNumbers.parseDouble(feeController.text) ?? 0.0;
+                            final parsedYear = ArabicNumbers.parseInt(yearController.text) ?? DateTime.now().year;
 
                             final courseModel = Course(
                               id: course?.id,
