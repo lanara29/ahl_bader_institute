@@ -56,6 +56,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   bool _isLoadingCourses = true;
   bool _isSaving = false;
 
+  // Existing Students Search & Copy State
+  List<Student> _allExistingStudents = [];
+  Student? _matchedExistingStudent;
+  bool _hasCopiedData = false;
+
   final List<String> _socialStatusOptions = [
     'عزباء',
     'أعزب / عزباء',
@@ -101,6 +106,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         _socialStatusOptions.add(s.socialStatus);
         _selectedSocialStatus = s.socialStatus;
       }
+    } else {
+      _loadExistingStudents();
+      _nameController.addListener(_checkForExistingStudentMatch);
     }
     _loadTeachers();
     _loadCourses();
@@ -108,6 +116,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
   @override
   void dispose() {
+    _nameController.removeListener(_checkForExistingStudentMatch);
     _nameController.dispose();
     _surnameController.dispose();
     _fatherNameController.dispose();
@@ -123,6 +132,212 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     _paidAmountController.dispose();
     _paymentNotesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadExistingStudents() async {
+    final list = await _dbHelper.getAllStudents();
+    if (mounted) {
+      setState(() {
+        _allExistingStudents = list;
+      });
+    }
+  }
+
+  void _checkForExistingStudentMatch() {
+    if (widget.student != null || _hasCopiedData) return;
+
+    final input = _nameController.text.trim().toLowerCase();
+    if (input.length < 2) {
+      if (_matchedExistingStudent != null) {
+        setState(() => _matchedExistingStudent = null);
+      }
+      return;
+    }
+
+    final matches = _allExistingStudents.where((s) {
+      final sFullName = '${s.name} ${s.surname} ${s.fatherName}'.trim().toLowerCase();
+      final sName = s.name.trim().toLowerCase();
+      return sName.contains(input) || sFullName.contains(input);
+    }).toList();
+
+    if (matches.isNotEmpty) {
+      if (_matchedExistingStudent != matches.first) {
+        setState(() {
+          _matchedExistingStudent = matches.first;
+        });
+      }
+    } else {
+      if (_matchedExistingStudent != null) {
+        setState(() {
+          _matchedExistingStudent = null;
+        });
+      }
+    }
+  }
+
+  void _importExistingStudentData(Student s) {
+    setState(() {
+      _hasCopiedData = true;
+      _nameController.text = s.name;
+      _surnameController.text = s.surname;
+      _fatherNameController.text = s.fatherName;
+      _motherNameController.text = s.motherName;
+      _fatherJobController.text = s.fatherJob;
+      _motherJobController.text = s.motherJob;
+      _addressController.text = s.address;
+      _mobileController.text = s.mobile;
+      _parentMobileController.text = s.parentMobile;
+      _gradeController.text = s.grade;
+      _notesController.text = s.notes;
+
+      if (_socialStatusOptions.contains(s.socialStatus)) {
+        _selectedSocialStatus = s.socialStatus;
+      }
+
+      _matchedExistingStudent = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تم نسخ بيانات الطالب (${s.name} ${s.surname}) بنجاح! اختر الدورة الجديدة والآنسة ثم اضغط حفظ.',
+          style: GoogleFonts.cairo(),
+        ),
+        backgroundColor: const Color(0xFF00796B),
+      ),
+    );
+  }
+
+  void _showImportStudentBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final filtered = _allExistingStudents.where((s) {
+              final q = searchQuery.trim().toLowerCase();
+              if (q.isEmpty) return true;
+              final full = '${s.name} ${s.surname} ${s.fatherName}'.toLowerCase();
+              return full.contains(q) || s.mobile.contains(q) || s.parentMobile.contains(q);
+            }).toList();
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.75,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.person_search_rounded, color: Color(0xFFC89336), size: 24),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'استيراد/نسخ بيانات طالب مسجل بدورة سابقة',
+                            style: GoogleFonts.cairo(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryTeal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      autofocus: true,
+                      onChanged: (val) => setSheetState(() => searchQuery = val),
+                      style: GoogleFonts.cairo(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'ابحث عن اسم الطالب، الكنية، أو برقم الموبايل...',
+                        hintStyle: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade500),
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryTeal),
+                        filled: true,
+                        fillColor: const Color(0xFFF3FAF9),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                'لم يتم العثور على طالب يطابق البحث',
+                                style: GoogleFonts.cairo(color: Colors.grey.shade600),
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (_, index) {
+                                final st = filtered[index];
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  leading: CircleAvatar(
+                                    backgroundColor: const Color(0xFFFEF3D6),
+                                    child: Text(
+                                      st.name.isNotEmpty ? st.name[0] : 'ط',
+                                      style: GoogleFonts.cairo(
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFFC89336),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    '${st.name} ${st.surname} ${st.fatherName.isNotEmpty ? "بن ${st.fatherName}" : ""}',
+                                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                  ),
+                                  subtitle: Text(
+                                    'الدورة: ${st.courseName.isNotEmpty ? st.courseName : "دورة سابقة"} • الآنسة: ${st.teacherName.isNotEmpty ? st.teacherName : "غير محدد"}',
+                                    style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey.shade600),
+                                  ),
+                                  trailing: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFC89336),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      elevation: 0,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      _importExistingStudentData(st);
+                                    },
+                                    child: Text(
+                                      'نسخ البيانات',
+                                      style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _autoDetectPaymentStatus() {
@@ -309,6 +524,29 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (!isEditing && _allExistingStudents.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: OutlinedButton.icon(
+                              onPressed: _showImportStudentBottomSheet,
+                              icon: const Icon(Icons.person_search_rounded, color: Color(0xFFC89336), size: 20),
+                              label: Text(
+                                'استيراد/نسخ بيانات طالب مسجل بدورة سابقة 📋',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFFC89336),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFC89336), width: 1.5),
+                                backgroundColor: const Color(0xFFFFF8E1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                              ),
+                            ),
+                          ),
+
                         // Card 1: البيانات الشخصية
                         _buildPersonalDataCard(),
 
@@ -436,6 +674,66 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           ],
         ),
 
+        // Suggestion Card for Returning Student (نسخ بيانات طالب سابق)
+        if (_matchedExistingStudent != null && !_hasCopiedData) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8E1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFFC107), width: 1.2),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.person_search_rounded, color: Color(0xFFC89336), size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'عُثر على طالب سابق باسم: ${_matchedExistingStudent!.name} ${_matchedExistingStudent!.surname}',
+                        style: GoogleFonts.cairo(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF5D4037),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_matchedExistingStudent!.courseName.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: Text(
+                      'مسجل سابقاً في: ${_matchedExistingStudent!.courseName} (${_matchedExistingStudent!.teacherName})',
+                      style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey.shade700),
+                    ),
+                  ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  height: 38,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _importExistingStudentData(_matchedExistingStudent!),
+                    icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white),
+                    label: Text(
+                      'نسخ بيانات الطالب وتعبئتها تلقائياً',
+                      style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC89336),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
         const SizedBox(height: 12),
 
         // Father & Mother
@@ -520,7 +818,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         _buildFormField(
           controller: _addressController,
           label: 'العنوان',
-          hint: 'الحي والشارع والمدينة',
+          hint: 'الحي والشارع',
         ),
       ],
     );
@@ -536,14 +834,14 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         _buildFormField(
           controller: _mobileController,
           label: 'الموبايل',
-          hint: '05xxxxxxxx',
+          hint: '09xxxxxxxx',
           isPhone: true,
         ),
         const SizedBox(height: 12),
         _buildFormField(
           controller: _parentMobileController,
           label: 'موبايل الأهل',
-          hint: '05xxxxxxxx',
+          hint: '09xxxxxxxx',
           isPhone: true,
         ),
       ],
