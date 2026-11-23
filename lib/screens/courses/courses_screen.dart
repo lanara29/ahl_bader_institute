@@ -63,7 +63,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
   List<Student> _getStudentsForCourse(Course course) {
-    return _allStudents.where((s) => s.courseId.toString() == course.id.toString()).toList();
+    return _allStudents.where((s) => s.matchesCourse(course)).toList();
   }
 
   void _handleSetActiveCourse(Course course) async {

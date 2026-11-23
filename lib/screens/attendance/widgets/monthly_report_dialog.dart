@@ -327,15 +327,18 @@ class _MonthlyAttendanceReportDialogState
                       : ListView.separated(
                           padding: const EdgeInsets.all(16),
                           itemCount: widget.teachers.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          separatorBuilder: (context, index) => const SizedBox(height: 10),
                           itemBuilder: (context, index) {
                             final teacher = widget.teachers[index];
                             final stats = _computeTeacherStats(teacher);
                             final int rate = stats['rate'];
 
                             Color rateColor = Colors.green.shade700;
-                            if (rate < 75) rateColor = Colors.red.shade700;
-                            else if (rate < 90) rateColor = Colors.orange.shade800;
+                            if (rate < 75) {
+                              rateColor = Colors.red.shade700;
+                            } else if (rate < 90) {
+                              rateColor = Colors.orange.shade800;
+                            }
 
                             return Container(
                               padding: const EdgeInsets.all(12),

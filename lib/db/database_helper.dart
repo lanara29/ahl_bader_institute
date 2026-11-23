@@ -64,7 +64,27 @@ class DatabaseHelper {
 
   Future<void> deleteTeacher(dynamic id) async {
     if (id == null) return;
-    await _teachersCol.doc(id.toString()).delete();
+    final batch = _firestore.batch();
+    batch.delete(_teachersCol.doc(id.toString()));
+
+    // تصفير الآنسة للطلاب التابعين لها تلقائياً حتى لا تبقى المعرفات معلقة
+    final studentsById = await _studentsCol.where('teacher_id', isEqualTo: id).get();
+    for (final doc in studentsById.docs) {
+      batch.update(doc.reference, {
+        'teacher_id': '',
+        'teacher_name': '',
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+    }
+    final studentsByStr = await _studentsCol.where('teacher_id', isEqualTo: id.toString()).get();
+    for (final doc in studentsByStr.docs) {
+      batch.update(doc.reference, {
+        'teacher_id': '',
+        'teacher_name': '',
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 
   // --- Student Operations (Firebase Firestore - 100% Dynamic) ---
@@ -224,7 +244,27 @@ class DatabaseHelper {
 
   Future<void> deleteCourse(dynamic id) async {
     if (id == null) return;
-    await _coursesCol.doc(id.toString()).delete();
+    final batch = _firestore.batch();
+    batch.delete(_coursesCol.doc(id.toString()));
+
+    // تصفير معرف الدورة للطلاب المسجلين بها تلقائياً
+    final studentsById = await _studentsCol.where('course_id', isEqualTo: id).get();
+    for (final doc in studentsById.docs) {
+      batch.update(doc.reference, {
+        'course_id': '',
+        'course_name': '',
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+    }
+    final studentsByStr = await _studentsCol.where('course_id', isEqualTo: id.toString()).get();
+    for (final doc in studentsByStr.docs) {
+      batch.update(doc.reference, {
+        'course_id': '',
+        'course_name': '',
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 
   Future<List<Student>> getStudentsByCourse(dynamic courseId) async {

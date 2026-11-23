@@ -28,7 +28,12 @@ class TransferStudentDialog {
       return;
     }
 
-    Teacher? selectedTeacher;
+    final teachersMap = <String, Teacher>{};
+    for (final t in validTeachers) {
+      final key = (t.id ?? t.name).toString();
+      teachersMap[key] = t;
+    }
+    String? selectedTeacherId;
     final dbHelper = DatabaseHelper();
 
     await showDialog(
@@ -99,16 +104,17 @@ class TransferStudentDialog {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: DropdownButtonHideUnderline(
-                      child: DropdownButton<Teacher>(
-                        value: selectedTeacher,
+                      child: DropdownButton<String>(
+                        value: selectedTeacherId,
                         isExpanded: true,
                         hint: Text(
                           'اختر الآنسة...',
                           style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint),
                         ),
-                        items: validTeachers.map((t) {
-                          return DropdownMenuItem<Teacher>(
-                            value: t,
+                        items: teachersMap.entries.map((entry) {
+                          final t = entry.value;
+                          return DropdownMenuItem<String>(
+                            value: entry.key,
                             child: Text(
                               'الآنسة ${t.name} (${t.ageRange})',
                               style: GoogleFonts.cairo(fontSize: 13),
@@ -116,7 +122,7 @@ class TransferStudentDialog {
                           );
                         }).toList(),
                         onChanged: (val) {
-                          setDialogState(() => selectedTeacher = val);
+                          setDialogState(() => selectedTeacherId = val);
                         },
                       ),
                     ),
@@ -133,22 +139,24 @@ class TransferStudentDialog {
                     backgroundColor: AppColors.primaryTeal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  onPressed: selectedTeacher == null
+                  onPressed: selectedTeacherId == null
                       ? null
                       : () async {
+                          final chosenTeacher = teachersMap[selectedTeacherId!];
+                          if (chosenTeacher == null) return;
                           Navigator.pop(ctx);
                           try {
                             await dbHelper.updateStudentTeacher(
                               studentId: student.id,
-                              teacherId: selectedTeacher!.id,
-                              teacherName: selectedTeacher!.name,
+                              teacherId: chosenTeacher.id,
+                              teacherName: chosenTeacher.name,
                             );
                             onTransferred();
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'تم نقل الطالب بنجاح إلى حلقة الآنسة ${selectedTeacher!.name}',
+                                    'تم نقل الطالب بنجاح إلى حلقة الآنسة ${chosenTeacher.name}',
                                     style: GoogleFonts.cairo(),
                                   ),
                                   backgroundColor: const Color(0xFF00897B),

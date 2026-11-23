@@ -42,7 +42,7 @@ class Student {
     required this.teacherId,
     this.teacherName = '',
     required this.grade,
-    this.joinDate = '01-09-2023',
+    this.joinDate = '',
     this.notes = '',
     this.requiredFee = 0.0,
     this.paidAmount = 0.0,
@@ -117,16 +117,61 @@ class Student {
       teacherId: map['teacher_id'],
       teacherName: map['teacher_name'] as String? ?? '',
       grade: map['grade'] as String? ?? '',
-      joinDate: map['join_date'] as String? ?? '01-09-2023',
+      joinDate: (map['join_date'] as String?)?.isNotEmpty == true
+          ? (map['join_date'] as String)
+          : '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
       notes: map['notes'] as String? ?? '',
       requiredFee: (map['required_fee'] as num?)?.toDouble() ?? 0.0,
       paidAmount: (map['paid_amount'] as num?)?.toDouble() ?? 0.0,
       paymentStatus: map['payment_status'] as String? ?? 'unpaid',
       paymentDate: map['payment_date'] as String? ?? '',
       paymentNotes: map['payment_notes'] as String? ?? '',
-      courseId: map['course_id'],
-      courseName: map['course_name'] as String? ?? '',
+      courseId: map['course_id'] ?? map['courseId'],
+      courseName: (map['course_name'] ?? map['courseName'] ?? map['course']) as String? ?? '',
     );
+  }
+
+  /// التحقق من تبعية الطالب لدورة معينة سواء بالمعرف ID أو بالاسم
+  bool matchesCourse(dynamic course) {
+    if (course == null) return false;
+    final dynamic cId = course.id;
+    final String cName = course.name;
+
+    final sId = (courseId ?? '').toString().trim();
+    final targetId = (cId ?? '').toString().trim();
+    if (sId.isNotEmpty && targetId.isNotEmpty && sId == targetId) {
+      return true;
+    }
+
+    final sName = courseName.trim().toLowerCase();
+    final targetName = cName.trim().toLowerCase();
+    if (sName.isNotEmpty && targetName.isNotEmpty && sName == targetName) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// التحقق من مطابقة الطالب لمعرف دورة أو اسمها أو حالة "غير مسجل بدورة"
+  bool matchesCourseIdOrName(String? target) {
+    if (target == null || target.trim().isEmpty || target == 'all') return true;
+    final t = target.trim();
+    if (t == 'unassigned') {
+      final sId = (courseId ?? '').toString().trim();
+      final sName = courseName.trim();
+      return sId.isEmpty && sName.isEmpty;
+    }
+
+    final sId = (courseId ?? '').toString().trim();
+    if (sId.isNotEmpty && sId == t) return true;
+
+    final sName = courseName.trim().toLowerCase();
+    final targetLower = t.toLowerCase();
+    if (sName.isNotEmpty && (sName == targetLower || targetLower.contains(sName))) {
+      return true;
+    }
+
+    return false;
   }
 
   Student copyWith({

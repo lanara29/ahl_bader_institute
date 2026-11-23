@@ -5,6 +5,7 @@ import '../models/student.dart';
 import '../models/teacher.dart';
 import '../models/course.dart';
 import '../db/database_helper.dart';
+import '../utils/arabic_numbers.dart';
 
 class AddStudentScreen extends StatefulWidget {
   final Student? student;
@@ -98,7 +99,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             : s.paidAmount.toString();
       }
       _paymentNotesController.text = s.paymentNotes;
-      _selectedPaymentStatus = s.paymentStatus.isNotEmpty ? s.paymentStatus : 'unpaid';
+      _selectedPaymentStatus = s.paymentStatus.isNotEmpty
+          ? s.paymentStatus
+          : 'unpaid';
 
       if (_socialStatusOptions.contains(s.socialStatus)) {
         _selectedSocialStatus = s.socialStatus;
@@ -155,7 +158,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     }
 
     final matches = _allExistingStudents.where((s) {
-      final sFullName = '${s.name} ${s.surname} ${s.fatherName}'.trim().toLowerCase();
+      final sFullName = '${s.name} ${s.surname} ${s.fatherName}'
+          .trim()
+          .toLowerCase();
       final sName = s.name.trim().toLowerCase();
       return sName.contains(input) || sFullName.contains(input);
     }).toList();
@@ -223,8 +228,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             final filtered = _allExistingStudents.where((s) {
               final q = searchQuery.trim().toLowerCase();
               if (q.isEmpty) return true;
-              final full = '${s.name} ${s.surname} ${s.fatherName}'.toLowerCase();
-              return full.contains(q) || s.mobile.contains(q) || s.parentMobile.contains(q);
+              final full = '${s.name} ${s.surname} ${s.fatherName}'
+                  .toLowerCase();
+              return full.contains(q) ||
+                  s.mobile.contains(q) ||
+                  s.parentMobile.contains(q);
             }).toList();
 
             return Directionality(
@@ -245,7 +253,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        const Icon(Icons.person_search_rounded, color: Color(0xFFC89336), size: 24),
+                        const Icon(
+                          Icons.person_search_rounded,
+                          color: Color(0xFFC89336),
+                          size: 24,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -262,12 +274,20 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     const SizedBox(height: 14),
                     TextField(
                       autofocus: true,
-                      onChanged: (val) => setSheetState(() => searchQuery = val),
+                      onChanged: (val) =>
+                          setSheetState(() => searchQuery = val),
                       style: GoogleFonts.cairo(fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: 'ابحث عن اسم الطالب، الكنية، أو برقم الموبايل...',
-                        hintStyle: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade500),
-                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryTeal),
+                        hintText:
+                            'ابحث عن اسم الطالب، الكنية، أو برقم الموبايل...',
+                        hintStyle: GoogleFonts.cairo(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.primaryTeal,
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFF3FAF9),
                         border: OutlineInputBorder(
@@ -282,16 +302,22 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                           ? Center(
                               child: Text(
                                 'لم يتم العثور على طالب يطابق البحث',
-                                style: GoogleFonts.cairo(color: Colors.grey.shade600),
+                                style: GoogleFonts.cairo(
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
                             )
                           : ListView.separated(
                               itemCount: filtered.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              separatorBuilder: (context, index) =>
+                                  const Divider(height: 1),
                               itemBuilder: (_, index) {
                                 final st = filtered[index];
                                 return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   leading: CircleAvatar(
                                     backgroundColor: const Color(0xFFFEF3D6),
                                     child: Text(
@@ -304,17 +330,28 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                   ),
                                   title: Text(
                                     '${st.name} ${st.surname} ${st.fatherName.isNotEmpty ? "بن ${st.fatherName}" : ""}',
-                                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                    style: GoogleFonts.cairo(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.5,
+                                    ),
                                   ),
                                   subtitle: Text(
                                     'الدورة: ${st.courseName.isNotEmpty ? st.courseName : "دورة سابقة"} • الآنسة: ${st.teacherName.isNotEmpty ? st.teacherName : "غير محدد"}',
-                                    style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey.shade600),
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
                                   trailing: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFC89336),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
                                       elevation: 0,
                                     ),
                                     onPressed: () {
@@ -323,7 +360,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                     },
                                     child: Text(
                                       'نسخ البيانات',
-                                      style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 );
@@ -341,8 +382,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   }
 
   void _autoDetectPaymentStatus() {
-    final req = double.tryParse(_requiredFeeController.text.trim()) ?? 0.0;
-    final paid = double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+    final req = ArabicNumbers.parseDouble(_requiredFeeController.text) ?? 0.0;
+    final paid = ArabicNumbers.parseDouble(_paidAmountController.text) ?? 0.0;
 
     if (_selectedPaymentStatus == 'exempt') return;
 
@@ -366,7 +407,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         if (widget.student != null) {
           final tMatch = list.where(
             (t) =>
-                (t.id != null && t.id.toString() == widget.student!.teacherId.toString()) ||
+                (t.id != null &&
+                    t.id.toString() == widget.student!.teacherId.toString()) ||
                 t.name == widget.student!.teacherName,
           );
           if (tMatch.isNotEmpty) {
@@ -377,7 +419,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         } else if (list.isNotEmpty) {
           _selectedTeacher = list.first;
         }
-        _selectedTeacherId = _selectedTeacher?.id?.toString() ?? _selectedTeacher?.name;
+        _selectedTeacherId =
+            _selectedTeacher?.id?.toString() ?? _selectedTeacher?.name;
         _isLoadingTeachers = false;
       });
     }
@@ -396,7 +439,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           // Editing existing student
           final cMatch = courses.where(
             (c) =>
-                (c.id != null && c.id.toString() == widget.student!.courseId.toString()) ||
+                (c.id != null &&
+                    c.id.toString() == widget.student!.courseId.toString()) ||
                 c.name == widget.student!.courseName,
           );
           if (cMatch.isNotEmpty) {
@@ -412,22 +456,30 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           if (courses.isNotEmpty) {
             defaultCourse = courses.firstWhere(
               (c) => c.isActive,
-              orElse: () => activeCourse != null &&
-                      courses.any((c) => c.id.toString() == activeCourse.id.toString())
-                  ? courses.firstWhere((c) => c.id.toString() == activeCourse.id.toString())
+              orElse: () =>
+                  activeCourse != null &&
+                      courses.any(
+                        (c) => c.id.toString() == activeCourse.id.toString(),
+                      )
+                  ? courses.firstWhere(
+                      (c) => c.id.toString() == activeCourse.id.toString(),
+                    )
                   : courses.first,
             );
           }
           _selectedCourse = defaultCourse;
 
-          if (_selectedCourse != null && _selectedCourse!.fee > 0 && _requiredFeeController.text.isEmpty) {
+          if (_selectedCourse != null &&
+              _selectedCourse!.fee > 0 &&
+              _requiredFeeController.text.isEmpty) {
             _requiredFeeController.text = _selectedCourse!.fee % 1 == 0
                 ? _selectedCourse!.fee.toInt().toString()
                 : _selectedCourse!.fee.toString();
             _autoDetectPaymentStatus();
           }
         }
-        _selectedCourseId = _selectedCourse?.id?.toString() ?? _selectedCourse?.name;
+        _selectedCourseId =
+            _selectedCourse?.id?.toString() ?? _selectedCourse?.name;
         _isLoadingCourses = false;
       });
     }
@@ -456,11 +508,14 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         teacherId: _selectedTeacher?.id ?? '',
         teacherName: _selectedTeacher?.name ?? '',
         grade: _gradeController.text.trim(),
-        joinDate: widget.student?.joinDate ??
+        joinDate:
+            widget.student?.joinDate ??
             '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
         notes: _notesController.text.trim(),
-        requiredFee: double.tryParse(_requiredFeeController.text.trim()) ?? 0.0,
-        paidAmount: double.tryParse(_paidAmountController.text.trim()) ?? 0.0,
+        requiredFee:
+            ArabicNumbers.parseDouble(_requiredFeeController.text) ?? 0.0,
+        paidAmount:
+            ArabicNumbers.parseDouble(_paidAmountController.text) ?? 0.0,
         paymentStatus: _selectedPaymentStatus,
         paymentDate: widget.student?.paymentDate.isNotEmpty == true
             ? widget.student!.paymentDate
@@ -480,7 +535,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEditing ? 'تم تعديل بيانات الطالب بنجاح!' : 'تم حفظ بيانات الطالب بنجاح!'),
+            content: Text(
+              isEditing
+                  ? 'تم تعديل بيانات الطالب بنجاح!'
+                  : 'تم حفظ بيانات الطالب بنجاح!',
+            ),
             backgroundColor: AppColors.primaryTeal,
           ),
         );
@@ -518,7 +577,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -529,7 +591,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                             padding: const EdgeInsets.only(bottom: 14),
                             child: OutlinedButton.icon(
                               onPressed: _showImportStudentBottomSheet,
-                              icon: const Icon(Icons.person_search_rounded, color: Color(0xFFC89336), size: 20),
+                              icon: const Icon(
+                                Icons.person_search_rounded,
+                                color: Color(0xFFC89336),
+                                size: 20,
+                              ),
                               label: Text(
                                 'استيراد/نسخ بيانات طالب مسجل بدورة سابقة 📋',
                                 style: GoogleFonts.cairo(
@@ -539,10 +605,18 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Color(0xFFC89336), width: 1.5),
+                                side: const BorderSide(
+                                  color: Color(0xFFC89336),
+                                  width: 1.5,
+                                ),
                                 backgroundColor: const Color(0xFFFFF8E1),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
                               ),
                             ),
                           ),
@@ -588,10 +662,15 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                                 ? const SizedBox(
                                     width: 22,
                                     height: 22,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : Text(
-                                    isEditing ? 'حفظ التعديلات' : 'إضافة الطالب',
+                                    isEditing
+                                        ? 'حفظ التعديلات'
+                                        : 'إضافة الطالب',
                                     style: GoogleFonts.cairo(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -637,7 +716,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 22),
+            icon: const Icon(
+              Icons.arrow_forward_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ],
@@ -689,7 +772,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.person_search_rounded, color: Color(0xFFC89336), size: 20),
+                    const Icon(
+                      Icons.person_search_rounded,
+                      color: Color(0xFFC89336),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -708,7 +795,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     padding: const EdgeInsets.only(top: 4, bottom: 4),
                     child: Text(
                       'مسجل سابقاً في: ${_matchedExistingStudent!.courseName} (${_matchedExistingStudent!.teacherName})',
-                      style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey.shade700),
+                      style: GoogleFonts.cairo(
+                        fontSize: 11,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 6),
@@ -716,15 +806,26 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   width: double.infinity,
                   height: 38,
                   child: ElevatedButton.icon(
-                    onPressed: () => _importExistingStudentData(_matchedExistingStudent!),
-                    icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white),
+                    onPressed: () =>
+                        _importExistingStudentData(_matchedExistingStudent!),
+                    icon: const Icon(
+                      Icons.copy_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                     label: Text(
                       'نسخ بيانات الطالب وتعبئتها تلقائياً',
-                      style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFC89336),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       elevation: 0,
                     ),
                   ),
@@ -796,13 +897,28 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedSocialStatus,
-              hint: Text('اختر...', style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint)),
+              hint: Text(
+                'اختر...',
+                style: GoogleFonts.cairo(
+                  fontSize: 13,
+                  color: AppColors.inputHint,
+                ),
+              ),
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: AppColors.primaryTeal,
+              ),
               items: _socialStatusOptions.map((status) {
                 return DropdownMenuItem(
                   value: status,
-                  child: Text(status, style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark)),
+                  child: Text(
+                    status,
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      color: AppColors.textDark,
+                    ),
+                  ),
                 );
               }).toList(),
               onChanged: (val) {
@@ -867,7 +983,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             border: Border.all(color: Colors.grey.shade300, width: 1),
           ),
           child: _isLoadingCourses
-              ? const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
+              ? const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
               : Builder(
                   builder: (context) {
                     final uniqueCourses = <String, Course>{};
@@ -876,46 +998,74 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       if (key.isNotEmpty) uniqueCourses[key] = course;
                     }
 
-                    final validCourseId = uniqueCourses.containsKey(_selectedCourseId)
+                    final validCourseId =
+                        uniqueCourses.containsKey(_selectedCourseId)
                         ? _selectedCourseId
-                        : (uniqueCourses.isNotEmpty ? uniqueCourses.keys.first : null);
+                        : (uniqueCourses.isNotEmpty
+                              ? uniqueCourses.keys.first
+                              : null);
 
                     return DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: validCourseId,
-                        hint: Text('اختر الدورة...', style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint)),
+                        hint: Text(
+                          'اختر الدورة...',
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            color: AppColors.inputHint,
+                          ),
+                        ),
                         isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primaryTeal,
+                        ),
                         items: uniqueCourses.entries.map((entry) {
                           final course = entry.value;
-                          final feeStr = course.fee % 1 == 0 ? course.fee.toInt().toString() : course.fee.toString();
+                          final feeStr = course.fee % 1 == 0
+                              ? course.fee.toInt().toString()
+                              : course.fee.toString();
                           return DropdownMenuItem<String>(
                             value: entry.key,
                             child: Row(
                               children: [
                                 Icon(
-                                  course.isSummer ? Icons.wb_sunny_rounded : Icons.ac_unit_rounded,
+                                  course.isSummer
+                                      ? Icons.wb_sunny_rounded
+                                      : Icons.ac_unit_rounded,
                                   size: 16,
-                                  color: course.isSummer ? const Color(0xFFC89336) : const Color(0xFF00796B),
+                                  color: course.isSummer
+                                      ? const Color(0xFFC89336)
+                                      : const Color(0xFF00796B),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     '${course.name} (رسم: $feeStr)',
-                                    style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark),
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 13,
+                                      color: AppColors.textDark,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 if (course.isActive)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 1,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFE8F5E9),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       'نشطة',
-                                      style: GoogleFonts.cairo(fontSize: 9.5, color: Colors.green.shade800, fontWeight: FontWeight.bold),
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 9.5,
+                                        color: Colors.green.shade800,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -927,8 +1077,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                             setState(() {
                               _selectedCourseId = val;
                               _selectedCourse = uniqueCourses[val];
-                              if (_selectedCourse != null && _selectedCourse!.fee > 0) {
-                                _requiredFeeController.text = _selectedCourse!.fee % 1 == 0
+                              if (_selectedCourse != null &&
+                                  _selectedCourse!.fee > 0) {
+                                _requiredFeeController.text =
+                                    _selectedCourse!.fee % 1 == 0
                                     ? _selectedCourse!.fee.toInt().toString()
                                     : _selectedCourse!.fee.toString();
                                 _autoDetectPaymentStatus();
@@ -956,7 +1108,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             border: Border.all(color: Colors.grey.shade300, width: 1),
           ),
           child: _isLoadingTeachers
-              ? const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)))
+              ? const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
               : Builder(
                   builder: (context) {
                     final uniqueTeachers = <String, Teacher>{};
@@ -965,20 +1123,38 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       if (key.isNotEmpty) uniqueTeachers[key] = t;
                     }
 
-                    final validTeacherId = uniqueTeachers.containsKey(_selectedTeacherId)
+                    final validTeacherId =
+                        uniqueTeachers.containsKey(_selectedTeacherId)
                         ? _selectedTeacherId
-                        : (uniqueTeachers.isNotEmpty ? uniqueTeachers.keys.first : null);
+                        : (uniqueTeachers.isNotEmpty
+                              ? uniqueTeachers.keys.first
+                              : null);
 
                     return DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: validTeacherId,
-                        hint: Text('اختر...', style: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint)),
+                        hint: Text(
+                          'اختر...',
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            color: AppColors.inputHint,
+                          ),
+                        ),
                         isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primaryTeal,
+                        ),
                         items: uniqueTeachers.entries.map((entry) {
                           return DropdownMenuItem<String>(
                             value: entry.key,
-                            child: Text(entry.value.name, style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark)),
+                            child: Text(
+                              entry.value.name,
+                              style: GoogleFonts.cairo(
+                                fontSize: 13,
+                                color: AppColors.textDark,
+                              ),
+                            ),
                           );
                         }).toList(),
                         onChanged: (String? val) {
@@ -1019,7 +1195,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark),
           decoration: InputDecoration(
             hintText: 'أي ملاحظات إضافية...',
-            hintStyle: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint),
+            hintStyle: GoogleFonts.cairo(
+              fontSize: 13,
+              color: AppColors.inputHint,
+            ),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.all(12),
@@ -1029,7 +1208,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primaryTeal, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryTeal,
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -1094,8 +1276,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
   // Card 4: البيانات المالية والرسوم
   Widget _buildPaymentDataCard() {
-    final req = double.tryParse(_requiredFeeController.text.trim()) ?? 0.0;
-    final paid = double.tryParse(_paidAmountController.text.trim()) ?? 0.0;
+    final req = ArabicNumbers.parseDouble(_requiredFeeController.text) ?? 0.0;
+    final paid = ArabicNumbers.parseDouble(_paidAmountController.text) ?? 0.0;
     final remaining = (req - paid) > 0 ? (req - paid) : 0.0;
 
     return _formCard(
@@ -1152,15 +1334,32 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       child: DropdownButton<String>(
                         value: _selectedPaymentStatus,
                         isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryTeal),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primaryTeal,
+                        ),
                         items: const [
-                          DropdownMenuItem(value: 'unpaid', child: Text('غير مسدد')),
-                          DropdownMenuItem(value: 'partial', child: Text('مسدد جزئياً')),
-                          DropdownMenuItem(value: 'paid', child: Text('مسدد بالكامل')),
-                          DropdownMenuItem(value: 'exempt', child: Text('معفى / منحة')),
+                          DropdownMenuItem(
+                            value: 'unpaid',
+                            child: Text('غير مسدد'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'partial',
+                            child: Text('مسدد جزئياً'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'paid',
+                            child: Text('مسدد بالكامل'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'exempt',
+                            child: Text('معفى / منحة'),
+                          ),
                         ],
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedPaymentStatus = val);
+                          if (val != null) {
+                            setState(() => _selectedPaymentStatus = val);
+                          }
                         },
                       ),
                     ),
@@ -1181,10 +1380,14 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                     height: 46,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: remaining > 0 ? const Color(0xFFFFF3E0) : const Color(0xFFD7F5F0),
+                      color: remaining > 0
+                          ? const Color(0xFFFFF3E0)
+                          : const Color(0xFFD7F5F0),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: remaining > 0 ? Colors.orange.shade300 : const Color(0xFF00796B).withValues(alpha: 0.3),
+                        color: remaining > 0
+                            ? Colors.orange.shade300
+                            : const Color(0xFF00796B).withValues(alpha: 0.3),
                       ),
                     ),
                     alignment: Alignment.center,
@@ -1195,7 +1398,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       style: GoogleFonts.cairo(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
-                        color: remaining > 0 ? Colors.orange.shade900 : const Color(0xFF00796B),
+                        color: remaining > 0
+                            ? Colors.orange.shade900
+                            : const Color(0xFF00796B),
                       ),
                     ),
                   ),
@@ -1235,22 +1440,33 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           controller: controller,
           keyboardType: isPhone
               ? TextInputType.phone
-              : (isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text),
+              : (isNumber
+                    ? const TextInputType.numberWithOptions(decimal: true)
+                    : TextInputType.text),
           onChanged: onChanged,
           style: GoogleFonts.cairo(fontSize: 13, color: AppColors.textDark),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.cairo(fontSize: 13, color: AppColors.inputHint),
+            hintStyle: GoogleFonts.cairo(
+              fontSize: 13,
+              color: AppColors.inputHint,
+            ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primaryTeal, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryTeal,
+                width: 1.5,
+              ),
             ),
           ),
           validator: isRequired

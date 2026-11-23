@@ -20,35 +20,26 @@ class CircleStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // Card 1: الحلقات القرآنية
         Expanded(
           child: _statCard(
-            title: 'الحلقات',
+            title: 'الحلقات القرآنية',
             value: '$totalTeachers',
-            subtitle: 'آنسة معتمدة',
+            subtitle: 'آنسة مشرفة',
             icon: Icons.mosque_rounded,
             color: const Color(0xFF00796B),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 10),
+
+        // Card 2: إجمالي الطلاب
         Expanded(
           child: _statCard(
             title: 'إجمالي الطلاب',
             value: '$totalStudents',
-            subtitle: '$assignedStudents موزعين',
+            subtitle: '$assignedStudents موزعين بالحلقات',
             icon: Icons.groups_rounded,
             color: const Color(0xFFC89336),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: _statCard(
-            title: 'متوسط الحلقة',
-            value: totalTeachers == 0
-                ? '0'
-                : (totalStudents / totalTeachers).toStringAsFixed(1),
-            subtitle: 'طالب / حلقة',
-            icon: Icons.pie_chart_rounded,
-            color: const Color(0xFF8B5CF6),
           ),
         ),
       ],
@@ -63,11 +54,11 @@ class CircleStatsRow extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.2),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -83,45 +74,40 @@ class CircleStatsRow extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 14),
-              const SizedBox(width: 3),
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 6),
               Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    style: GoogleFonts.cairo(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMuted,
-                    ),
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMuted,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: GoogleFonts.cairo(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.cairo(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: color,
+              height: 1.1,
             ),
           ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              subtitle,
-              maxLines: 1,
-              style: GoogleFonts.cairo(
-                fontSize: 9,
-                color: AppColors.textMuted,
-              ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.cairo(
+              fontSize: 10,
+              color: AppColors.textMuted,
             ),
           ),
         ],

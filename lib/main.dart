@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/courses/select_course_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +30,7 @@ class AhlBaderInstitute extends StatelessWidget {
             );
           }
           if (snapshot.hasData && snapshot.data != null) {
-            return const HomeScreen();
+            return const SelectCourseScreen();
           }
           return const LoginScreen();
         },

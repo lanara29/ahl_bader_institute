@@ -35,6 +35,7 @@ void main() async {
   
   final outFile = File('assets/images/app_icon.png');
   await outFile.writeAsBytes(byteData!.buffer.asUint8List());
+  // ignore: avoid_print
   print('SUCCESS: Created assets/images/app_icon.png with padding');
   exit(0);
 }
